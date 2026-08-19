@@ -541,7 +541,7 @@ export default function AdminPanel({
   const guardarLabel = editId ? "Guardar cambios" : sheet === "look" ? "Crear look" : "Publicar prenda";
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", background: "#FDF7F5", minHeight: "100vh", overflowX: "hidden", position: "relative" }}>
+    <div className="eden-shell" style={{ background: "#FDF7F5", minHeight: "100vh", overflowX: "hidden", position: "relative" }}>
       <style>{`@keyframes adminSpin{to{transform:rotate(360deg)}}`}</style>
 
       <header
@@ -584,7 +584,7 @@ export default function AdminPanel({
         </div>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "16px 16px 4px" }}>
+      <div className="eden-admin-controls" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "16px 16px 4px" }}>
         {stats.map((s) => (
           <div
             key={s.label}
@@ -603,7 +603,7 @@ export default function AdminPanel({
         ))}
       </div>
 
-      <div style={{ padding: "16px 16px 10px" }}>
+      <div className="eden-admin-controls" style={{ padding: "16px 16px 10px" }}>
         {mostrarAlerta && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#F7EAE7", border: "1px solid #EBD0CC", borderRadius: 14, padding: "12px 14px", marginBottom: 12 }}>
             <span style={{ flex: "none", width: 8, height: 8, borderRadius: 4, background: ACCENT }}></span>
@@ -641,30 +641,33 @@ export default function AdminPanel({
 
       {tab === "prendas" && (
         <div style={{ padding: "6px 16px 30px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <button
-            onClick={nuevaPrenda}
-            className="press"
-            style={withPress(
-              { width: "100%", minHeight: 56, border: "1.5px dashed #E3C7C4", borderRadius: 18, background: "transparent", color: "#B25C71", fontSize: 14.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "transform .45s cubic-bezier(.32,.72,0,1),background .3s ease,border-color .3s ease" },
-              { "--press-scale": "scale(.975)", "--press-bg": "#F9EDEA", "--press-border": "#B25C71" }
+          <div className="eden-admin-controls" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <button
+              onClick={nuevaPrenda}
+              className="press"
+              style={withPress(
+                { width: "100%", minHeight: 56, border: "1.5px dashed #E3C7C4", borderRadius: 18, background: "transparent", color: "#B25C71", fontSize: 14.5, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "transform .45s cubic-bezier(.32,.72,0,1),background .3s ease,border-color .3s ease" },
+                { "--press-scale": "scale(.975)", "--press-bg": "#F9EDEA", "--press-border": "#B25C71" }
+              )}
+            >
+              + &nbsp;Nueva prenda
+            </button>
+
+            <input
+              value={search}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+              placeholder="Buscar prenda por nombre…"
+              style={{ width: "100%", height: 46, border: "1px solid #E3C7C4", borderRadius: 14, background: "#FFFFFF", padding: "0 15px", fontSize: 14.5, color: "#5B2E36" }}
+            />
+
+            {search.trim() && filteredProducts.length === 0 && (
+              <div style={{ padding: "20px 6px", textAlign: "center", fontSize: 13, color: "#A87B81" }}>
+                No hay prendas que coincidan con “{search.trim()}”.
+              </div>
             )}
-          >
-            + &nbsp;Nueva prenda
-          </button>
+          </div>
 
-          <input
-            value={search}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-            placeholder="Buscar prenda por nombre…"
-            style={{ width: "100%", height: 46, border: "1px solid #E3C7C4", borderRadius: 14, background: "#FFFFFF", padding: "0 15px", fontSize: 14.5, color: "#5B2E36" }}
-          />
-
-          {search.trim() && filteredProducts.length === 0 && (
-            <div style={{ padding: "20px 6px", textAlign: "center", fontSize: 13, color: "#A87B81" }}>
-              No hay prendas que coincidan con “{search.trim()}”.
-            </div>
-          )}
-
+          <div className="eden-admin-list">
           {filteredProducts.map((p, i) => {
             const stock = totalStock(p.sizes, p.stock);
             const meta = (p.sizes.length ? p.sizes.join(" · ") : "Sin tallas") + (p.colors.length ? " · " + p.colors.length + " colores" : "");
@@ -711,6 +714,7 @@ export default function AdminPanel({
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
@@ -727,6 +731,7 @@ export default function AdminPanel({
             + &nbsp;Nuevo look
           </button>
 
+          <div className="eden-admin-list">
           {looks.map((l, i) => {
             const prods = l.productIds.map((id) => byId(id)).filter((p): p is Product => !!p);
             const prendasTxt = prods.map((p) => p.name).join(" + ") || "Sin prendas";
@@ -771,6 +776,7 @@ export default function AdminPanel({
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
@@ -779,7 +785,8 @@ export default function AdminPanel({
           {orders.length === 0 ? (
             <div style={{ padding: "30px 8px", textAlign: "center", fontSize: 13, color: "#A87B81" }}>Todavía no hay pedidos.</div>
           ) : (
-            orders.map((o) => (
+            <div className="eden-admin-list">
+            {orders.map((o) => (
               <div key={o.id} style={{ background: "#FDF7F5", border: "1px solid #EBD0CC", borderRadius: 18, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
                   <span style={{ fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 19 }}>Pedido #{o.orderNumber}</span>
@@ -802,7 +809,8 @@ export default function AdminPanel({
                   <span style={{ fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 20 }}>{fmt(o.total)}</span>
                 </div>
               </div>
-            ))
+            ))}
+            </div>
           )}
         </div>
       )}

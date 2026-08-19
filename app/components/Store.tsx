@@ -532,7 +532,7 @@ export default function Store({
   const feed = products.length > 0 ? Array.from({ length: 4 }, (_, i) => products[i % products.length]) : [];
 
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", background: "#FDF7F5", minHeight: "100vh", overflowX: "hidden", position: "relative" }}>
+    <div className="eden-shell" style={{ background: "#FDF7F5", minHeight: "100vh", overflowX: "hidden", position: "relative" }}>
       {/* Header */}
       <header
         style={{
@@ -674,8 +674,8 @@ export default function Store({
           style={{
             position: "absolute",
             left: 0,
-            right: 0,
             bottom: 0,
+            maxWidth: 480,
             padding: "0 22px 30px",
             display: "flex",
             flexDirection: "column",
@@ -802,7 +802,7 @@ export default function Store({
             Poquitas piezas, elegidas con calma. Toca cualquiera para ver los detalles.
           </p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="eden-grid">
           {products.map((p, i) => {
             const libre = quedanTotal(p);
             const badgeShow = libre <= 2;
@@ -936,7 +936,7 @@ export default function Store({
         const isAdded = lookAdded === look.id;
         const [img1, img2] = memberProducts;
         return (
-          <section key={look.id} style={{ padding: "46px 16px 6px" }}>
+          <section key={look.id} style={{ padding: "46px 16px 6px", maxWidth: 560, margin: "0 auto" }}>
             <div
               data-reveal
               style={{

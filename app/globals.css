@@ -46,6 +46,66 @@ textarea:focus {
   color: #5b2e36;
 }
 
+/* --- Responsive de escritorio ------------------------------------------------
+   El diseño original es mobile-only (max-width fijo de 480px inline). Estas clases
+   se aplican SOBRE ese diseño: en mobile (<768px) no cambian nada — mismo ancho,
+   misma grilla de 2 columnas. A partir de 768px el "shell" de la página crece y la
+   grilla de productos pasa a más columnas. Los bottom sheets (ficha de producto,
+   carrito, formularios del admin) NO usan estas clases a propósito: quedan angostos
+   y centrados, funcionando como un modal prolijo en pantallas grandes. */
+.eden-shell {
+  max-width: 480px;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .eden-shell {
+    max-width: 1100px;
+  }
+}
+
+.eden-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .eden-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+}
+@media (min-width: 1024px) {
+  .eden-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Controles del admin (banner, tabs, buscador): quedan legibles en vez de estirarse
+   a todo el ancho del shell en pantallas grandes. */
+.eden-admin-controls {
+  max-width: 480px;
+}
+@media (min-width: 768px) {
+  .eden-admin-controls {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+.eden-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+@media (min-width: 1024px) {
+  .eden-admin-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
 /* Réplica de "style-active" del diseño original (pseudo-estado :active con transform/background/etc
    propios por elemento). Cada elemento porta sus valores de :active vía CSS custom properties;
    `revert` como fallback deja la propiedad intacta cuando ese elemento no la usa.
