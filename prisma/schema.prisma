@@ -42,3 +42,10 @@ model Order {
   status      String   @default("nuevo")
   createdAt   DateTime @default(now())
 }
+
+// Fila única (id fijo "singleton") con textos editables del catálogo, como el mensaje del ticker.
+model Settings {
+  id         String   @id @default("singleton")
+  tickerText String   @default("Envíos a domicilio · Otoño · Invierno 26 · +56 9 4631 2281")
+  updatedAt  DateTime @updatedAt
+}

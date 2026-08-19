@@ -147,8 +147,19 @@ function checkReveal() {
   });
 }
 
-export default function Store({ products, looks }: { products: Product[]; looks: Look[] }) {
+const FAVORITES_KEY = "eden-shop-favoritos";
+
+export default function Store({
+  products,
+  looks,
+  tickerText,
+}: {
+  products: Product[];
+  looks: Look[];
+  tickerText: string;
+}) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [sheetState, setSheetState] = useState<Product | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -178,6 +189,33 @@ export default function Store({ products, looks }: { products: Product[]; looks:
   const nudgeTRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const avisoTRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lookTRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Favoritos: viven solo en el navegador de la clienta (localStorage), no en la base de datos.
+  // Se hidratan tras el montaje a propósito (SSR no tiene acceso a localStorage).
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FAVORITES_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hidratación única desde localStorage tras montar, no hay alternativa sin desajuste de SSR
+      if (raw) setFavorites(new Set(JSON.parse(raw) as string[]));
+    } catch {
+      // localStorage no disponible o dato corrupto: seguimos sin favoritos guardados.
+    }
+  }, []);
+
+  function toggleFavorite(id: string, e?: MouseEvent<HTMLButtonElement>) {
+    e?.stopPropagation();
+    setFavorites((prevFavs) => {
+      const next = new Set(prevFavs);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(next)));
+      } catch {
+        // si falla el guardado, el toggle sigue funcionando solo para esta sesión.
+      }
+      return next;
+    });
+  }
 
   const productById = useMemo(() => {
     const map = new Map<string, Product>();
@@ -595,9 +633,7 @@ export default function Store({ products, looks }: { products: Product[]; looks:
                 whiteSpace: "nowrap",
               }}
             >
-              <span>Envíos a domicilio</span>
-              <span>Otoño · Invierno 26</span>
-              <span>+56 9 4631 2281</span>
+              <span>{tickerText}</span>
             </div>
           ))}
         </div>
@@ -849,6 +885,34 @@ export default function Store({ products, looks }: { products: Product[]; looks:
                     }}
                   >
                     {isAdded ? "✓" : "+"}
+                  </button>
+                  <button
+                    className="press"
+                    onClick={(e) => toggleFavorite(p.id, e)}
+                    aria-label={favorites.has(p.id) ? "Quitar de favoritos" : "Agregar a favoritos"}
+                    style={{
+                      position: "absolute",
+                      right: 9,
+                      top: 9,
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      border: 0,
+                      background: "rgba(91,46,54,.42)",
+                      backdropFilter: "blur(8px)",
+                      WebkitBackdropFilter: "blur(8px)",
+                      color: favorites.has(p.id) ? accent : "#FDF7F5",
+                      fontSize: 15,
+                      lineHeight: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      transition: "transform .4s cubic-bezier(.34,1.56,.64,1),color .3s ease",
+                      ...press({ "--press-scale": "scale(.8)" }),
+                    }}
+                  >
+                    {favorites.has(p.id) ? "♥" : "♡"}
                   </button>
                 </div>
                 <div style={{ padding: "11px 3px 0", display: "flex", flexDirection: "column", gap: 3 }}>
@@ -1396,9 +1460,30 @@ export default function Store({ products, looks }: { products: Product[]; looks:
             )}
           </div>
           <div style={{ padding: "20px 22px 26px" }}>
-            <h3 style={{ margin: "0 0 4px", fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 30, lineHeight: 1.08, fontWeight: 400 }}>
-              {activeSheet.name}
-            </h3>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+              <h3 style={{ margin: "0 0 4px", fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 30, lineHeight: 1.08, fontWeight: 400 }}>
+                {activeSheet.name}
+              </h3>
+              <button
+                className="press"
+                onClick={(e) => toggleFavorite(activeSheet.id, e)}
+                aria-label={favorites.has(activeSheet.id) ? "Quitar de favoritos" : "Agregar a favoritos"}
+                style={{
+                  flex: "none",
+                  border: 0,
+                  background: "transparent",
+                  color: favorites.has(activeSheet.id) ? accent : "#C99AA4",
+                  fontSize: 24,
+                  lineHeight: 1,
+                  padding: 4,
+                  cursor: "pointer",
+                  transition: "transform .4s cubic-bezier(.34,1.56,.64,1),color .3s ease",
+                  ...press({ "--press-scale": "scale(.8)" }),
+                }}
+              >
+                {favorites.has(activeSheet.id) ? "♥" : "♡"}
+              </button>
+            </div>
             <p style={{ margin: "0 0 20px", fontSize: 22, fontWeight: 500, display: "flex", alignItems: "baseline", gap: 8 }}>
               {hasSheetOffer && (
                 <span style={{ fontSize: 14, color: "#C99AA4", textDecoration: "line-through" }}>{fmt(activeSheet.price)}</span>

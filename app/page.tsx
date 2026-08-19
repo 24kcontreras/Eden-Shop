@@ -6,9 +6,10 @@ import Store, { type Product, type Look } from "./components/Store";
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const [rawProducts, rawLooks] = await Promise.all([
+  const [rawProducts, rawLooks, settings] = await Promise.all([
     prisma.product.findMany({ where: { published: true }, orderBy: { createdAt: "asc" } }),
     prisma.look.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.settings.upsert({ where: { id: "singleton" }, create: {}, update: {} }),
   ]);
 
   const products: Product[] = rawProducts.map((p) => ({
@@ -33,5 +34,5 @@ export default async function Page() {
     price: l.price,
   }));
 
-  return <Store products={products} looks={looks} />;
+  return <Store products={products} looks={looks} tickerText={settings.tickerText} />;
 }

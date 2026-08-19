@@ -114,16 +114,23 @@ export default function AdminPanel({
   initialProducts,
   initialLooks,
   initialOrders,
+  initialTickerText,
 }: {
   initialProducts: Product[];
   initialLooks: Look[];
   initialOrders: Order[];
+  initialTickerText: string;
 }) {
   const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [looks, setLooks] = useState<Look[]>(initialLooks);
   const [orders] = useState<Order[]>(initialOrders);
+  const [search, setSearch] = useState("");
+
+  const [tickerText, setTickerText] = useState(initialTickerText);
+  const [tickerSaving, setTickerSaving] = useState(false);
+  const lastSavedTicker = useRef(initialTickerText);
 
   const [tab, setTab] = useState<Tab>("prendas");
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -211,7 +218,28 @@ export default function AdminPanel({
     toastT.current = setTimeout(() => setToastOn(false), 1900);
   }
 
+  async function saveTicker() {
+    setTickerSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tickerText }),
+      });
+      if (!res.ok) throw new Error("save failed");
+      lastSavedTicker.current = tickerText;
+      aviso("Mensaje del banner actualizado");
+    } catch {
+      aviso("No se pudo guardar el mensaje del banner");
+    } finally {
+      setTickerSaving(false);
+    }
+  }
+
   const byId = (id: string) => products.find((p) => p.id === id);
+  const filteredProducts = search.trim()
+    ? products.filter((p) => p.name.toLowerCase().includes(search.trim().toLowerCase()))
+    : products;
 
   // ---- sheet open/close ----
   function cerrar() {
@@ -582,6 +610,21 @@ export default function AdminPanel({
             <span style={{ fontSize: 13, lineHeight: 1.45, color: "#5B2E36" }}>{alertaTxt}</span>
           </div>
         )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "#FDF7F5", border: "1px solid #EBD0CC", borderRadius: 14, padding: "12px 14px", marginBottom: 12 }}>
+          <span style={{ fontSize: 10, letterSpacing: ".26em", textTransform: "uppercase", color: "#A87B81" }}>Mensaje del banner</span>
+          <input
+            value={tickerText}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setTickerText(e.target.value)}
+            onBlur={() => {
+              if (tickerText !== lastSavedTicker.current) saveTicker();
+            }}
+            placeholder="Envíos a domicilio · Otoño · Invierno 26 · +56 9 4631 2281"
+            style={{ width: "100%", height: 42, border: "1px solid #E3C7C4", borderRadius: 12, background: "#FFFFFF", padding: "0 13px", fontSize: 14, color: "#5B2E36" }}
+          />
+          <span style={{ fontSize: 11.5, color: "#C3A0A3" }}>
+            {tickerSaving ? "Guardando…" : "Es el texto que se mueve arriba de la foto principal del catálogo. Se guarda al salir del campo."}
+          </span>
+        </div>
         <div style={{ position: "relative", display: "flex", background: "#EFD9D5", borderRadius: 999, padding: 4 }}>
           <div
             style={{
@@ -609,7 +652,20 @@ export default function AdminPanel({
             + &nbsp;Nueva prenda
           </button>
 
-          {products.map((p, i) => {
+          <input
+            value={search}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+            placeholder="Buscar prenda por nombre…"
+            style={{ width: "100%", height: 46, border: "1px solid #E3C7C4", borderRadius: 14, background: "#FFFFFF", padding: "0 15px", fontSize: 14.5, color: "#5B2E36" }}
+          />
+
+          {search.trim() && filteredProducts.length === 0 && (
+            <div style={{ padding: "20px 6px", textAlign: "center", fontSize: 13, color: "#A87B81" }}>
+              No hay prendas que coincidan con “{search.trim()}”.
+            </div>
+          )}
+
+          {filteredProducts.map((p, i) => {
             const stock = totalStock(p.sizes, p.stock);
             const meta = (p.sizes.length ? p.sizes.join(" · ") : "Sin tallas") + (p.colors.length ? " · " + p.colors.length + " colores" : "");
             const hasOffer = !!(p.offerPrice && p.offerPrice > 0);

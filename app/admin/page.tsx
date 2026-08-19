@@ -6,10 +6,11 @@ import AdminPanel, { type Product, type Look, type Order } from "./AdminPanel";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const [rawProducts, rawLooks, rawOrders] = await Promise.all([
+  const [rawProducts, rawLooks, rawOrders, settings] = await Promise.all([
     prisma.product.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.look.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.order.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.settings.upsert({ where: { id: "singleton" }, create: {}, update: {} }),
   ]);
 
   const products: Product[] = rawProducts.map((p) => ({
@@ -43,5 +44,12 @@ export default async function AdminPage() {
     createdAt: o.createdAt.toISOString(),
   }));
 
-  return <AdminPanel initialProducts={products} initialLooks={looks} initialOrders={orders} />;
+  return (
+    <AdminPanel
+      initialProducts={products}
+      initialLooks={looks}
+      initialOrders={orders}
+      initialTickerText={settings.tickerText}
+    />
+  );
 }

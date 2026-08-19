@@ -73,6 +73,7 @@ async function main() {
   for (const l of looks) {
     await prisma.look.upsert({ where: { id: l.id }, create: l, update: l });
   }
+  await prisma.settings.upsert({ where: { id: "singleton" }, create: {}, update: {} });
   console.log(`Seed listo: ${products.length} productos, ${looks.length} looks.`);
 }
 
