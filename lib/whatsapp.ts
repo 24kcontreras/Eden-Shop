@@ -9,8 +9,9 @@ export function buildWhatsAppOrderLink(params: {
   orderNumber: number;
   items: WhatsAppOrderItem[];
   total: string;
+  whatsappNumber: string;
 }) {
-  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "56946312281";
+  const number = params.whatsappNumber;
   const lineas = params.items
     .map((i) => `• ${i.name} (talla ${i.talla}) x${i.qty} — ${i.line}`)
     .join("\n");

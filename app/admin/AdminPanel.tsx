@@ -115,11 +115,13 @@ export default function AdminPanel({
   initialLooks,
   initialOrders,
   initialTickerText,
+  initialWhatsappNumber,
 }: {
   initialProducts: Product[];
   initialLooks: Look[];
   initialOrders: Order[];
   initialTickerText: string;
+  initialWhatsappNumber: string;
 }) {
   const router = useRouter();
 
@@ -131,6 +133,10 @@ export default function AdminPanel({
   const [tickerText, setTickerText] = useState(initialTickerText);
   const [tickerSaving, setTickerSaving] = useState(false);
   const lastSavedTicker = useRef(initialTickerText);
+
+  const [whatsappNumber, setWhatsappNumber] = useState(initialWhatsappNumber);
+  const [whatsappSaving, setWhatsappSaving] = useState(false);
+  const lastSavedWhatsapp = useRef(initialWhatsappNumber);
 
   const [tab, setTab] = useState<Tab>("prendas");
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -233,6 +239,30 @@ export default function AdminPanel({
       aviso("No se pudo guardar el mensaje del banner");
     } finally {
       setTickerSaving(false);
+    }
+  }
+
+  async function saveWhatsapp() {
+    const digits = whatsappNumber.replace(/\D/g, "");
+    if (!digits) {
+      aviso("Ingresa un número de WhatsApp válido");
+      return;
+    }
+    setWhatsappSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsappNumber: digits }),
+      });
+      if (!res.ok) throw new Error("save failed");
+      setWhatsappNumber(digits);
+      lastSavedWhatsapp.current = digits;
+      aviso("Número de WhatsApp actualizado");
+    } catch {
+      aviso("No se pudo guardar el número de WhatsApp");
+    } finally {
+      setWhatsappSaving(false);
     }
   }
 
@@ -623,6 +653,27 @@ export default function AdminPanel({
           />
           <span style={{ fontSize: 11.5, color: "#C3A0A3" }}>
             {tickerSaving ? "Guardando…" : "Es el texto que se mueve arriba de la foto principal del catálogo. Se guarda al salir del campo."}
+          </span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "#FDF7F5", border: "1px solid #EBD0CC", borderRadius: 14, padding: "12px 14px", marginBottom: 12 }}>
+          <span style={{ fontSize: 10, letterSpacing: ".26em", textTransform: "uppercase", color: "#A87B81" }}>Número de WhatsApp</span>
+          <div style={{ display: "flex", alignItems: "center", height: 42, border: "1px solid #E3C7C4", borderRadius: 12, background: "#FFFFFF", padding: "0 13px", gap: 6 }}>
+            <span style={{ fontSize: 14, color: "#C3A0A3" }}>+</span>
+            <input
+              value={whatsappNumber}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setWhatsappNumber(e.target.value.replace(/[^\d]/g, ""))}
+              onBlur={() => {
+                if (whatsappNumber !== lastSavedWhatsapp.current) saveWhatsapp();
+              }}
+              inputMode="numeric"
+              placeholder="56912345678"
+              style={{ flex: 1, width: "100%", border: 0, background: "transparent", fontSize: 14, color: "#5B2E36", padding: 0 }}
+            />
+          </div>
+          <span style={{ fontSize: 11.5, color: "#C3A0A3" }}>
+            {whatsappSaving
+              ? "Guardando…"
+              : "Con código de país, sin espacios ni símbolos (ej: 56912345678). Ahí llegan los pedidos del catálogo."}
           </span>
         </div>
         <div style={{ position: "relative", display: "flex", background: "#EFD9D5", borderRadius: 999, padding: 4 }}>

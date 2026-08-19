@@ -153,16 +153,19 @@ export default function Store({
   products,
   looks,
   tickerText,
+  whatsappNumber,
 }: {
   products: Product[];
   looks: Look[];
   tickerText: string;
+  whatsappNumber: string;
 }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [sheetState, setSheetState] = useState<Product | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [added, setAdded] = useState<string | null>(null);
   const [lookAdded, setLookAdded] = useState<string | null>(null);
   const [hero, setHero] = useState(0);
@@ -339,6 +342,7 @@ export default function Store({
   function closeAll() {
     setSheetOpen(false);
     setCartOpen(false);
+    setConfirmOpen(false);
     setLocked(false);
   }
 
@@ -467,8 +471,11 @@ export default function Store({
         orderNumber: data.orderNumber,
         items: lineItems.map((i) => ({ name: i.name, talla: i.talla, qty: i.qty, line: fmt(i.price * i.qty) })),
         total: fmt(orderTotal),
+        whatsappNumber,
       });
       window.open(waLink, "_blank");
+      setConfirmOpen(false);
+      closeAll();
     } catch {
       setOrderError("No pudimos preparar tu pedido. Intenta de nuevo.");
     } finally {
@@ -515,7 +522,10 @@ export default function Store({
 
   let sheetBtnLabel = "Agregar al carrito";
   let sheetBtnBg = "#5B2E36";
-  let sheetBtnAction: () => void = () => add(activeSheet, talla);
+  let sheetBtnAction: () => void = () => {
+    add(activeSheet, talla);
+    closeAll();
+  };
   if (!talla) {
     sheetBtnLabel = "Elige tu talla";
     sheetBtnBg = "#C99AA4";
@@ -1064,9 +1074,16 @@ export default function Store({
               ...press({ "--press-bg": "#F7EAE7" }),
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <span style={{ fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 22, lineHeight: 1.1, color: "#5B2E36" }}>¿Cómo comprar?</span>
-              <span style={{ fontSize: 12.5, color: "#A87B81" }}>Tres pasos, cambios y despacho</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <img
+                src="/brand/duda.png"
+                alt=""
+                style={{ width: 44, height: 44, objectFit: "contain", flex: "none", filter: "hue-rotate(-24deg) saturate(1.15)" }}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <span style={{ fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 22, lineHeight: 1.1, color: "#5B2E36" }}>¿Cómo comprar?</span>
+                <span style={{ fontSize: 12.5, color: "#A87B81" }}>Tres pasos, cambios y despacho</span>
+              </div>
             </div>
             <span
               style={{
@@ -1211,10 +1228,15 @@ export default function Store({
             <div>
               <p style={{ margin: "0 0 5px", fontSize: 10, letterSpacing: ".3em", textTransform: "uppercase", color: "#A87B81" }}>Instagram</p>
               <h2 style={{ margin: 0, fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 27, lineHeight: 1.1, fontWeight: 400 }}>
-                @edenstore.cl
+                @eden.shop._
               </h2>
             </div>
-            <a href="#catalogo" style={{ fontSize: 13.5, borderBottom: "1px solid #E3C7C4", paddingBottom: 2 }}>
+            <a
+              href="https://www.instagram.com/eden.shop._?igsi=OTU0cTJ5Yzl0czA5"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 13.5, borderBottom: "1px solid #E3C7C4", paddingBottom: 2 }}
+            >
               Seguir
             </a>
           </div>
@@ -1715,7 +1737,6 @@ export default function Store({
           <span style={{ fontSize: 12.5, color: "#A87B81", lineHeight: 1.5 }}>
             Te escribimos al WhatsApp para coordinar el pago por transferencia y el despacho.
           </span>
-          {orderError && <span style={{ fontSize: 12.5, color: accent, lineHeight: 1.5 }}>{orderError}</span>}
           <div style={{ display: "flex", gap: 10 }}>
             <button
               className="press"
@@ -1738,8 +1759,11 @@ export default function Store({
             </button>
             <button
               className="press"
-              onClick={handleWhatsAppOrder}
-              disabled={ordering || cart.length === 0}
+              onClick={() => {
+                setOrderError(null);
+                setConfirmOpen(true);
+              }}
+              disabled={cart.length === 0}
               style={{
                 flex: 1,
                 height: 52,
@@ -1749,14 +1773,133 @@ export default function Store({
                 color: "#FDF7F5",
                 fontSize: 15.5,
                 fontWeight: 500,
-                cursor: ordering || cart.length === 0 ? "default" : "pointer",
-                opacity: ordering || cart.length === 0 ? 0.7 : 1,
+                cursor: cart.length === 0 ? "default" : "pointer",
+                opacity: cart.length === 0 ? 0.7 : 1,
                 fontFamily: "inherit",
                 transition: "transform .45s cubic-bezier(.32,.72,0,1)",
                 ...press({ "--press-scale": "scale(.972)" }),
               }}
             >
-              {ordering ? "Preparando pedido…" : "Pedir por WhatsApp"}
+              Pedir por WhatsApp
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Backdrop de confirmación (por encima del carrito) */}
+      <div
+        onClick={() => !ordering && setConfirmOpen(false)}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 80,
+          background: "rgba(91,46,54,.46)",
+          backdropFilter: "blur(5px)",
+          WebkitBackdropFilter: "blur(5px)",
+          opacity: confirmOpen ? 1 : 0,
+          pointerEvents: confirmOpen ? "auto" : "none",
+          transition: "opacity .5s cubic-bezier(.32,.72,0,1)",
+        }}
+      />
+
+      {/* Confirmar pedido */}
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 90,
+          margin: "0 auto",
+          maxWidth: 480,
+          maxHeight: "85vh",
+          background: "#FDF7F5",
+          borderRadius: "26px 26px 0 0",
+          boxShadow: "0 -18px 60px rgba(91,46,54,.28)",
+          transform: `translateY(${confirmOpen ? "0%" : "102%"})`,
+          transition: "transform .58s cubic-bezier(.32,.72,0,1)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ padding: "10px 0 4px", display: "flex", justifyContent: "center", flex: "none" }}>
+          <div style={{ width: 38, height: 4, borderRadius: 2, background: "#E3C7C4" }} />
+        </div>
+        <div style={{ flex: "none", padding: "12px 22px 4px" }}>
+          <h3 style={{ margin: "0 0 8px", fontFamily: "'Instrument Serif',Georgia,serif", fontSize: 24, fontWeight: 400 }}>
+            Confirmar pedido
+          </h3>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "#8E5A62", textWrap: "pretty" }}>
+            El sistema va a enviar tu pedido por WhatsApp para que lo procesemos. Ahí mismo, por ese WhatsApp, coordinamos el pago y gestionamos la entrega — no hace falta que hagas nada más acá.
+          </p>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "10px 22px" }}>
+          {cart.map((c) => {
+            const p = productById.get(c.id);
+            if (!p) return null;
+            const price = sellPrice(p);
+            return (
+              <div
+                key={`confirm-${c.id}-${c.talla}`}
+                style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "9px 0", borderBottom: "1px solid #EBD0CC", fontSize: 13.5, color: "#5B2E36" }}
+              >
+                <span>
+                  {c.qty}× {p.name} <span style={{ color: "#A87B81" }}>(talla {c.talla})</span>
+                </span>
+                <span style={{ fontWeight: 500, flex: "none" }}>{fmt(price * c.qty)}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ flex: "none", padding: "14px 22px 24px", borderTop: "1px solid #EBD0CC", display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 14, color: "#8E5A62" }}>Total</span>
+            <span style={{ fontSize: 21, fontWeight: 500 }}>{fmt(cartTotal)}</span>
+          </div>
+          {orderError && <span style={{ fontSize: 12.5, color: accent, lineHeight: 1.5 }}>{orderError}</span>}
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              className="press"
+              onClick={() => setConfirmOpen(false)}
+              disabled={ordering}
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                border: "1px solid #E3C7C4",
+                background: "transparent",
+                color: "#8E5A62",
+                fontSize: 17,
+                cursor: ordering ? "default" : "pointer",
+                fontFamily: "inherit",
+                transition: "transform .45s cubic-bezier(.32,.72,0,1),background .3s ease",
+                ...press({ "--press-scale": "scale(.92)", "--press-bg": "#F3E2DE" }),
+              }}
+            >
+              ✕
+            </button>
+            <button
+              className="press"
+              onClick={handleWhatsAppOrder}
+              disabled={ordering}
+              style={{
+                flex: 1,
+                height: 52,
+                borderRadius: 26,
+                border: 0,
+                background: "#5B2E36",
+                color: "#FDF7F5",
+                fontSize: 15.5,
+                fontWeight: 500,
+                cursor: ordering ? "default" : "pointer",
+                opacity: ordering ? 0.7 : 1,
+                fontFamily: "inherit",
+                transition: "transform .45s cubic-bezier(.32,.72,0,1)",
+                ...press({ "--press-scale": "scale(.972)" }),
+              }}
+            >
+              {ordering ? "Enviando…" : "Confirmar y enviar"}
             </button>
           </div>
         </div>

@@ -12,10 +12,12 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   const body = await req.json();
+  const whatsappNumber =
+    typeof body.whatsappNumber === "string" ? body.whatsappNumber.replace(/\D/g, "") : undefined;
   const settings = await prisma.settings.upsert({
     where: { id: "singleton" },
-    create: { tickerText: body.tickerText ?? undefined },
-    update: { tickerText: body.tickerText },
+    create: { tickerText: body.tickerText ?? undefined, whatsappNumber: whatsappNumber || undefined },
+    update: { tickerText: body.tickerText, whatsappNumber: whatsappNumber || undefined },
   });
   return NextResponse.json(settings);
 }

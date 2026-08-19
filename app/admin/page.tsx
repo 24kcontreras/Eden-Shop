@@ -50,6 +50,7 @@ export default async function AdminPage() {
       initialLooks={looks}
       initialOrders={orders}
       initialTickerText={settings.tickerText}
+      initialWhatsappNumber={settings.whatsappNumber}
     />
   );
 }

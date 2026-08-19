@@ -34,5 +34,12 @@ export default async function Page() {
     price: l.price,
   }));
 
-  return <Store products={products} looks={looks} tickerText={settings.tickerText} />;
+  return (
+    <Store
+      products={products}
+      looks={looks}
+      tickerText={settings.tickerText}
+      whatsappNumber={settings.whatsappNumber}
+    />
+  );
 }
