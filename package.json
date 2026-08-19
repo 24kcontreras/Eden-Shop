@@ -1,14 +1,22 @@
 {
-  "name": "eden-shop-tmp",
+  "name": "eden-shop",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.112.3",
+    "jspdf": "^4.2.1",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -19,6 +27,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "prisma": "^6.19.3",
+    "sharp": "^0.35.3",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }

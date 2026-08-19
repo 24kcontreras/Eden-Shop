@@ -1,69 +1,37 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { prisma } from "@/lib/prisma";
+import Store, { type Product, type Look } from "./components/Store";
 
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+// No DATABASE_URL is configured at build time yet, so this page must not be
+// prerendered — force it to render dynamically at request time.
+export const dynamic = "force-dynamic";
+
+export default async function Page() {
+  const [rawProducts, rawLooks] = await Promise.all([
+    prisma.product.findMany({ where: { published: true }, orderBy: { createdAt: "asc" } }),
+    prisma.look.findMany({ orderBy: { createdAt: "asc" } }),
+  ]);
+
+  const products: Product[] = rawProducts.map((p) => ({
+    id: p.id,
+    name: p.name,
+    desc: p.desc,
+    material: p.material,
+    price: p.price,
+    offerPrice: p.offerPrice,
+    sizes: p.sizes as string[],
+    stock: p.stock as Record<string, number>,
+    colors: p.colors as string[],
+    img: p.img,
+    imgPos: p.imgPos,
+    published: p.published,
+  }));
+
+  const looks: Look[] = rawLooks.map((l) => ({
+    id: l.id,
+    name: l.name,
+    productIds: l.productIds as string[],
+    price: l.price,
+  }));
+
+  return <Store products={products} looks={looks} />;
 }
