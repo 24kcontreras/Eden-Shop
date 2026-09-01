@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { buildCatalogJsonLd, jsonLdScript } from "@/lib/seo";
 import Store, { type Product, type Look } from "./components/Store";
 
 // No DATABASE_URL is configured at build time yet, so this page must not be
@@ -34,12 +35,24 @@ export default async function Page() {
     price: l.price,
   }));
 
+  const catalogJsonLd = buildCatalogJsonLd(products);
+
   return (
-    <Store
-      products={products}
-      looks={looks}
-      tickerText={settings.tickerText}
-      whatsappNumber={settings.whatsappNumber}
-    />
+    <>
+      <Store
+        products={products}
+        looks={looks}
+        tickerText={settings.tickerText}
+        whatsappNumber={settings.whatsappNumber}
+      />
+      {products.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonLdScript(catalogJsonLd),
+          }}
+        />
+      )}
+    </>
   );
 }

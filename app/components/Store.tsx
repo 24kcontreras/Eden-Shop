@@ -822,6 +822,7 @@ export default function Store({
             return (
               <div
                 key={p.id}
+                id={`producto-${p.id}`}
                 data-reveal
                 data-delay={i * 90}
                 className="press"
